@@ -114,10 +114,10 @@ Any further steps are undefined behavior.
         screen_height = 400
 
         world_width = self.x_threshold * 2
-        scale = screen_width /world_width
+        scale = screen_width/world_width
         carty = 100  # TOP OF CART
         polewidth = 10.0
-        polelen = scale * 1.0
+        polelen = scale * (2 * self.length)
         cartwidth = 50.0
         cartheight = 30.0
 
@@ -130,14 +130,14 @@ Any further steps are undefined behavior.
             self.carttrans = rendering.Transform()
             cart.add_attr(self.carttrans)
             self.viewer.add_geom(cart)
-            l, r, t, b = -polewidth / 2, polewidth / 2, polelen-polewidth / 2, -polewidth / 2
+            l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
             pole = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
             pole.set_color(.8, .6, .4)
             self.poletrans = rendering.Transform(translation=(0, axleoffset))
             pole.add_attr(self.poletrans)
             pole.add_attr(self.carttrans)
             self.viewer.add_geom(pole)
-            self.axle = rendering.make_circle(polewidth / 2)
+            self.axle = rendering.make_circle(polewidth/2)
             self.axle.add_attr(self.poletrans)
             self.axle.add_attr(self.carttrans)
             self.axle.set_color(.5, .5, .8)
@@ -146,16 +146,24 @@ Any further steps are undefined behavior.
             self.track.set_color(0, 0, 0)
             self.viewer.add_geom(self.track)
 
+            self._pole_geom = pole
+
         if self.state is None:
             return None
+
+        # Edit the pole polygon vertex
+        pole = self._pole_geom
+        l, r, t, b = -polewidth / 2, polewidth / 2, polelen - polewidth / 2, -polewidth / 2
+        pole.v = [(l, b), (l, t), (r, t), (r, b)]
 
         x = self.state
         cartx = x[0] * scale + screen_width / 2.0  # MIDDLE OF CART
         self.carttrans.set_translation(cartx, carty)
         self.poletrans.set_rotation(-x[2])
 
-        return self.viewer.render(return_rgb_array=(mode == 'rgb_array'))
+        return self.viewer.render(return_rgb_array=mode == 'rgb_array')
 
     def close(self):
         if self.viewer:
             self.viewer.close()
+            self.viewer = None
